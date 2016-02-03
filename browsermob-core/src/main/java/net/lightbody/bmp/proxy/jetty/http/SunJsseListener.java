@@ -44,6 +44,7 @@ import java.security.Security;
  * @author Court Demas (court@kiwiconsulting.com)
  * @author Forge Research Pty Ltd  ACN 003 491 576
  **/
+@Deprecated
 public class SunJsseListener extends JsseListener
 {
     private static Log log = LogFactory.getLog(SunJsseListener.class);

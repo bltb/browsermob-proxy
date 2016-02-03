@@ -555,6 +555,7 @@ public class ServletHttpRequest
     /**
      * @deprecated
      */
+    @Deprecated
     public boolean isRequestedSessionIdFromUrl()
     {
         return isRequestedSessionIdFromURL();
@@ -760,6 +761,7 @@ public class ServletHttpRequest
      * @deprecated  As of Version 2.1 of the Java Servlet API,
      * 			use {@link javax.servlet.ServletContext#getRealPath} instead.
      */
+    @Deprecated
     public String getRealPath(String path)
     {
         return _servletHandler.getServletContext().getRealPath(path);

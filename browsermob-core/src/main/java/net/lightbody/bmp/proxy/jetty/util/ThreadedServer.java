@@ -221,6 +221,7 @@ abstract public class ThreadedServer extends ThreadPool
      * 
      * @deprecated maxIdleTime is used instead.
      */
+    @Deprecated
     public void setMaxReadTimeMs(int ms)
     {
         log.warn("setMaxReadTimeMs is deprecated. Use setMaxIdleTimeMs()");
@@ -401,6 +402,7 @@ abstract public class ThreadedServer extends ThreadPool
      * @param timeout The time to wait for a connection. Normally passed the ThreadPool maxIdleTime.
      * @return Accepted Socket
      */
+    @Deprecated
     protected Socket acceptSocket(ServerSocket ignored, int timeout)
     {
         return acceptSocket(timeout);

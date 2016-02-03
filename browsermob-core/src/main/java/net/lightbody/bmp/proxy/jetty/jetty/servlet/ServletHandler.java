@@ -196,6 +196,7 @@ public class ServletHandler extends Container implements HttpHandler
     public ServletContext getServletContext() { return _context; }
 
     /* ------------------------------------------------------------ */
+    @Deprecated
     public PathMap getServletMap() { return _servletMap; }
     
     /* ------------------------------------------------------------ */
@@ -205,6 +206,7 @@ public class ServletHandler extends Container implements HttpHandler
     /** Set the dynamic servlet path.
      * @deprecated Use org.mortbay.jetty.servlet.Invoker
      */
+    @Deprecated
     public void setDynamicServletPathSpec(String dynamicServletPathSpec)
     {
         log.warn("setDynamicServletPathSpec is Deprecated.");
@@ -214,6 +216,7 @@ public class ServletHandler extends Container implements HttpHandler
     /** Set dynamic servlet initial parameters.
      * @deprecated Use org.mortbay.jetty.servlet.Invoker
      */
+    @Deprecated
     public void setDynamicInitParams(Map initParams)
     {
         log.warn("setDynamicInitParams is Deprecated.");
@@ -223,6 +226,7 @@ public class ServletHandler extends Container implements HttpHandler
     /** Set serving dynamic system servlets.
      * @deprecated Use org.mortbay.jetty.servlet.Invoker
      */
+    @Deprecated
     public void setServeDynamicSystemServlets(boolean b)
     {
         log.warn("setServeDynamicSystemServlets is Deprecated.");
@@ -1098,6 +1102,7 @@ public class ServletHandler extends Container implements HttpHandler
         /**
          * @deprecated 
          */
+        @Deprecated
         public Servlet getServlet(String name)
         {
             return null;
@@ -1107,6 +1112,7 @@ public class ServletHandler extends Container implements HttpHandler
         /**
          * @deprecated 
          */
+        @Deprecated
         public Enumeration getServlets()
         {
             return Collections.enumeration(Collections.EMPTY_LIST);
@@ -1116,6 +1122,7 @@ public class ServletHandler extends Container implements HttpHandler
         /**
          * @deprecated 
          */
+        @Deprecated
         public Enumeration getServletNames()
         {
             return Collections.enumeration(Collections.EMPTY_LIST);
@@ -1139,6 +1146,7 @@ public class ServletHandler extends Container implements HttpHandler
          * 			{@link #log(String message, Throwable throwable)} 
          *			instead.
          */
+        @Deprecated
         public void log(Exception e, String msg)
         {
             _contextLog.warn(msg,e);

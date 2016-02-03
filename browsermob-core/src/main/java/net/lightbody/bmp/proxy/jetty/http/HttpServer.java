@@ -81,6 +81,7 @@ public class HttpServer extends Container
     /** 
      * @deprecated User getHttpServers()
      */
+    @Deprecated
     public static List getHttpServerList()
     {
         return new ArrayList(__roServers);
@@ -792,6 +793,7 @@ public class HttpServer extends Container
      * @param virtualHost Host name or IP
      * @param alias Alias hostname or IP
      */
+    @Deprecated
     public void addHostAlias(String virtualHost, String alias)
     {
         log.warn("addHostAlias is deprecated. Use HttpContext.addVirtualHost");

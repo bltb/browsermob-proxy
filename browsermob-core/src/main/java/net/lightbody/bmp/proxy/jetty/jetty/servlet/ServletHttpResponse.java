@@ -514,6 +514,7 @@ public class ServletHttpResponse implements HttpServletResponse
     * @param status the status code
     * @param message the status message
     */
+    @Deprecated
     public void setStatus(int status, String message) 
     {
         setStatus(status);

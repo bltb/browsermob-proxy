@@ -153,7 +153,7 @@ public class CGI extends HttpServlet
 
         File exe=new File(_docRoot, first);
 
-        while ((first.endsWith("/") || !exe.exists()) && first.length()>=0)
+        while ((first.endsWith("/") || !exe.exists()) && !first.isEmpty())
         {
             int index=first.lastIndexOf('/');
 

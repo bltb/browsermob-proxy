@@ -224,6 +224,7 @@ public class NCSARequestLog implements RequestLog
     /**
      * @deprecated ignored
      */
+    @Deprecated
     public void setBuffered(boolean b)
     {}
     
