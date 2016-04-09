@@ -241,23 +241,24 @@ public class BrowserMobHttpUtil {
     }
 
     /**
-     * Retrieves the path + query string from the specified request. The returned path will not include
+     * Retrieves the raw (unescaped) path + query string from the specified request. The returned path will not include
      * the scheme, host, or port.
      *
      * @param httpRequest HTTP request
-     * @return the path + query string from the HTTP request
+     * @return the unescaped path + query string from the HTTP request
+     * @throws URISyntaxException if the path could not be parsed (due to invalid characters in the URI, etc.)
      */
-    public static String getPathFromRequest(HttpRequest httpRequest) {
+    public static String getRawPathAndParamsFromRequest(HttpRequest httpRequest) throws URISyntaxException {
         // if this request's URI contains a full URI (including scheme, host, etc.), strip away the non-path components
         if (startsWithHttpOrHttps(httpRequest.getUri())) {
-            try {
-                return getPathFromUri(httpRequest.getUri());
-            } catch (URISyntaxException e) {
-                // could not parse the URI, so fall through and return the URI as-is
-            }
-        }
+            return getRawPathAndParamsFromUri(httpRequest.getUri());
+        } else {
+            // to provide consistent validation behavior for URIs that contain a scheme and those that don't, attempt to parse
+            // the URI, even though we discard the parsed URI object
+            new URI(httpRequest.getUri());
 
-        return httpRequest.getUri();
+            return httpRequest.getUri();
+        }
     }
 
     /**
@@ -283,19 +284,23 @@ public class BrowserMobHttpUtil {
     }
 
     /**
-     * Retrieves the path from the URI, stripping out the scheme, host, and port. The path will begin with a
-     * leading '/'. For example, 'http://example.com/some/resource' would return '/some/resource'.
+     * Retrieves the raw (unescaped) path and query parameters from the URI, stripping out the scheme, host, and port.
+     * The path will begin with a leading '/'. For example, 'http://example.com/some/resource?param%20name=param%20value'
+     * would return '/some/resource?param%20name=param%20value'.
      *
-     * @param uriString the URI to parse, containing a scheme, host, port, and path
-     * @return the path from the URI
+     * @param uriString the URI to parse, containing a scheme, host, port, path, and query parameters
+     * @return the unescaped path and query parameters from the URI
      * @throws URISyntaxException if the specified URI is invalid or cannot be parsed
      */
-    public static String getPathFromUri(String uriString) throws URISyntaxException {
+    public static String getRawPathAndParamsFromUri(String uriString) throws URISyntaxException {
         URI uri = new URI(uriString);
-        if (uri.getQuery() != null) {
-            return uri.getPath() + '?' + uri.getQuery();
+        String path = uri.getRawPath();
+        String query = uri.getRawQuery();
+
+        if (query != null) {
+            return path + '?' + query;
         } else {
-            return uri.getPath();
+            return path;
         }
     }
 
