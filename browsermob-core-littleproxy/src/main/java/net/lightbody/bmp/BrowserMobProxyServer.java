@@ -31,6 +31,7 @@ import net.lightbody.bmp.filters.RewriteUrlFilter;
 import net.lightbody.bmp.filters.UnregisterRequestFilter;
 import net.lightbody.bmp.filters.WhitelistFilter;
 import net.lightbody.bmp.mitm.KeyStoreFileCertificateSource;
+import net.lightbody.bmp.mitm.TrustSource;
 import net.lightbody.bmp.mitm.keys.ECKeyGenerator;
 import net.lightbody.bmp.mitm.keys.RSAKeyGenerator;
 import net.lightbody.bmp.mitm.manager.ImpersonatingMitmManager;
@@ -94,8 +95,7 @@ import java.util.regex.Pattern;
 public class BrowserMobProxyServer implements BrowserMobProxy, LegacyProxyServer {
     private static final Logger log = LoggerFactory.getLogger(BrowserMobProxyServer.class);
 
-    //TODO: extract the version string into a more suitable location
-    private static final HarNameVersion HAR_CREATOR_VERSION = new HarNameVersion("BrowserMob Proxy", "2.1.0-beta-5-littleproxy");
+    private static final HarNameVersion HAR_CREATOR_VERSION = new HarNameVersion("BrowserMob Proxy", BrowserMobProxyUtil.getVersionString() + "-littleproxy");
 
     /* Default MITM resources */
     private static final String RSA_KEYSTORE_RESOURCE = "/sslSupport/ca-keystore-rsa.p12";
@@ -137,17 +137,17 @@ public class BrowserMobProxyServer implements BrowserMobProxy, LegacyProxyServer
     /**
      * The list of filterFactories that will generate the filters that implement browsermob-proxy behavior.
      */
-    private final List<HttpFiltersSource> filterFactories = new CopyOnWriteArrayList<HttpFiltersSource>();
+    private final List<HttpFiltersSource> filterFactories = new CopyOnWriteArrayList<>();
 
     /**
      * List of rejected URL patterns
      */
-    private volatile Collection<BlacklistEntry> blacklistEntries = new CopyOnWriteArrayList<BlacklistEntry>();
+    private volatile Collection<BlacklistEntry> blacklistEntries = new CopyOnWriteArrayList<>();
 
     /**
      * List of URLs to rewrite
      */
-    private volatile CopyOnWriteArrayList<RewriteRule> rewriteRules = new CopyOnWriteArrayList<RewriteRule>();
+    private volatile CopyOnWriteArrayList<RewriteRule> rewriteRules = new CopyOnWriteArrayList<>();
 
     /**
      * The LittleProxy instance that performs all proxy operations.
@@ -246,9 +246,9 @@ public class BrowserMobProxyServer implements BrowserMobProxy, LegacyProxyServer
     private volatile boolean errorOnUnsupportedOperation = false;
 
     /**
-     * When true, will not validate upstream servers' certificates. Currently only applicable when MITMing.
+     * The TrustSource that will be used to validate servers' certificates. If null, will not validate server certificates.
      */
-    private volatile boolean trustAllServers = true;
+    private volatile TrustSource trustSource = TrustSource.defaultTrustSource();
 
     /**
      * When true, use Elliptic Curve keys and certificates when impersonating upstream servers.
@@ -390,7 +390,7 @@ public class BrowserMobProxyServer implements BrowserMobProxy, LegacyProxyServer
                                 KEYSTORE_PRIVATE_KEY_ALIAS,
                                 KEYSTORE_PASSWORD))
                         .serverKeyGenerator(useEcc ? new ECKeyGenerator() : new RSAKeyGenerator())
-                        .trustAllServers(trustAllServers)
+                        .trustSource(trustSource)
                         .build();
             }
 
@@ -892,11 +892,11 @@ public class BrowserMobProxyServer implements BrowserMobProxy, LegacyProxyServer
 
     @Override
     public void setConnectTimeout(int connectTimeout, TimeUnit timeUnit) {
-        if (isStarted()) {
-            throw new IllegalStateException("LittleProxy implementation does not allow changes to connect timeout after proxy has been started");
-        }
-
         this.connectTimeoutMs = (int) TimeUnit.MILLISECONDS.convert(connectTimeout, timeUnit);
+
+        if (isStarted()) {
+            proxyServer.setConnectTimeout((int) TimeUnit.MILLISECONDS.convert(connectTimeout, timeUnit));
+        }
     }
 
     /**
@@ -969,13 +969,13 @@ public class BrowserMobProxyServer implements BrowserMobProxy, LegacyProxyServer
 
     @Override
     public void rewriteUrls(Map<String, String> rewriteRules) {
-        List<RewriteRule> newRules = new ArrayList<RewriteRule>(rewriteRules.size());
+        List<RewriteRule> newRules = new ArrayList<>(rewriteRules.size());
         for (Map.Entry<String, String> rewriteRule : rewriteRules.entrySet()) {
             RewriteRule newRule = new RewriteRule(rewriteRule.getKey(), rewriteRule.getValue());
             newRules.add(newRule);
         }
 
-        this.rewriteRules = new CopyOnWriteArrayList<RewriteRule>(newRules);
+        this.rewriteRules = new CopyOnWriteArrayList<>(newRules);
     }
 
     @Override
@@ -995,7 +995,7 @@ public class BrowserMobProxyServer implements BrowserMobProxy, LegacyProxyServer
 
     @Override
     public void setBlacklist(Collection<BlacklistEntry> blacklist) {
-        this.blacklistEntries = new CopyOnWriteArrayList<BlacklistEntry>(blacklist);
+        this.blacklistEntries = new CopyOnWriteArrayList<>(blacklist);
     }
 
     /**
@@ -1081,7 +1081,7 @@ public class BrowserMobProxyServer implements BrowserMobProxy, LegacyProxyServer
             // retrieve the response code and list of patterns from the current whitelist, the construct a new list of patterns that contains
             // all of the old whitelist's patterns + this new pattern
             int statusCode = currentWhitelist.getStatusCode();
-            List<String> newPatterns = new ArrayList<String>(currentWhitelist.getPatterns().size() + 1);
+            List<String> newPatterns = new ArrayList<>(currentWhitelist.getPatterns().size() + 1);
             for (Pattern pattern : currentWhitelist.getPatterns()) {
                 newPatterns.add(pattern.pattern());
             }
@@ -1425,7 +1425,22 @@ public class BrowserMobProxyServer implements BrowserMobProxy, LegacyProxyServer
             throw new IllegalStateException("Cannot disable upstream server verification after the proxy has been started");
         }
 
-        this.trustAllServers = trustAllServers;
+        if (trustAllServers) {
+            trustSource = null;
+        } else {
+            if (trustSource == null) {
+                trustSource = TrustSource.defaultTrustSource();
+            }
+        }
+    }
+
+    @Override
+    public void setTrustSource(TrustSource trustSource) {
+        if (isStarted()) {
+            throw new IllegalStateException("Cannot change TrustSource after proxy has been started");
+        }
+
+        this.trustSource = trustSource;
     }
 
     public boolean isMitmDisabled() {
